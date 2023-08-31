@@ -23,6 +23,9 @@ for line in eachline("/twitch_data/musae_ENGB_edges.csv")
   add_edge!(twitch_graph, parse(Int64, i) + 1, parse(Int64, j) + 1)
 end
 
+isolated_vertices = findall(degree(twitch_graph) .== 0)
+rem_vertices!(twitch_graph, isolated_vertices)
+
 @show nv(twitch_graph)
 @show ne(twitch_graph)
 

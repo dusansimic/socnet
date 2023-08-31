@@ -11,6 +11,7 @@ using Plots
 using StatsBase
 using Statistics
 using Distributed
+using Dates
 
 ENV["GKSwstype"] = "nul"
 
@@ -109,7 +110,13 @@ function macroscopic_characteristics_analysis(g::SimpleGraph)
     percentage_of_nodes_in_gcc = length(vertices(graph_of_connected_component)) / num_nodes
     percentage_of_edges_in_gcc = length(edges(graph_of_connected_component)) / num_edges
 
-    distances = Parallel.floyd_warshall_shortest_paths(graph_of_connected_component).dists
+    distances = Matrix{Int64}(undef, num_nodes, num_nodes)
+    for v in vertices(graph_of_connected_component)
+      dists = Parallel.dijkstra_shortest_paths(graph_of_connected_component, v).dists
+      for (i, d) in enumerate(dists)
+        distances[v, i] = d
+      end
+    end
     sum_of_distances = sum(distances)
     smallworldness = sum_of_distances / (num_nodes * (num_nodes - 1))
 
