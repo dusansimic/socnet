@@ -1,0 +1,295 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[serbian]{babel}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+
+\hypersetup{
+    colorlinks=true,
+    urlcolor=blue,
+    citecolor=blue
+}
+
+\title{Prakti\v cni projekat iz predmeta Socijalne Mreže}
+\author{Du\v san Simi\' c 49/19\\
+Departman za matematiku i informatiku\\
+Prirodno-matematički Fakultet\\
+\texttt{dmi.dusan.simic@student.pmf.uns.ac.rs}}
+\date{24. septembar 2023.}
+
+\begin{document}
+
+\maketitle
+
+\section{Uvod}
+
+Prakti\v cni projekat se sastoji iz dve celine: 1) implementacija i testiranje Batagelj-Zaver\v snik algoritma za k-core dekompoziciju grafova kao i 3 modela za generisanje grafova na kojima \' ce se algoritam za dekompoziciju testirati (Erd\H os-R\' enyi model, Barab\' asi-Albert model, i model koji generi\v se nasumi\v cnu mre\v zu koja ima strutkuru jezgro periferija) i 2) analiza tri velike neusmerene socijalne ili kompleksne mre\v ze po izboru.
+
+Tri velike mre\v ze za koje sam se odlu\v cio su Facebook ego mre\v za \cite{facebookgraph}, Deezer mre\v za \cite{deezergraph} i Twitch mre\v za \cite{twitchgraph} (samo \v cvorovi strimera na engleskom jeziku).
+
+Imeplmentacija algoritama i koda za analizu rezultata je ra\dj ena u programskom jeziku \href{https://julialang.org/}{Julia} (verzija 1.9.2) i za analizu grafova je kori\v s\' cen ekosistem biblioteka \href{https://juliagraphs.org/}{JuliaGraphs}. Za statisti\v cke funkcije (Pearsonov i Spearmanov koeficijent korelacije) su kori\v s\' cena standardna biblioteka \href{https://docs.julialang.org/en/v1/stdlib/Statistics/}{Statistics} i eksterna biblioteka \href{https://juliastats.org/StatsBase.jl/stable/}{StatsBase}. Za iscrtavanje grafikona je kori\v s\' cena blibloteka \href{https://docs.juliaplots.org/}{Plots}.
+
+\section{K-core dekompozicija}
+
+Implementacija algoritma za k-core dekompoziciju je ura\dj ena na osonvu standardne implementacije Batagelj-Zaver\v snik algoritma \cite{batageljzaversnik2003} opisane u njihovom radu.
+
+Algoritam je implementiran u obliku funkcije koja kao povratnu vrednost vra\' ca niz shell indeksa svakog od \v cvorova u grafu. Na osnovu tih podataka se trivijalno mo\v ze dobiti indukovani graf koji predstavlja k-core originalnog grafa.
+
+Drugi metod za k-core dekompoziciju koji je implementiran jeste ``straight-forward'' algoritam koji radi tako \v sto se bri\v su \v covorovi grafa sve dok dobijeni graf nije k-core. Pre brisanja \v covorova, originalni graf se kopira kako bi se o\v cuvao originalni graf.
+
+\subsection{Mali test primeri}
+
+Implementirani algoritmi su testirani na malim grafovima (15-20 \v cvorova) koje sam osmislio i \v cije sam \v sel indekse izra\v cunao ru\v cno tako da je ovim primerima utvr\dj ena ispravnost implementacije na malim grafovima.
+
+\section{Modeli za generisanje grafova}
+
+Kako bi se algoritam za k-core dekompoziciju testirao na realnijim primerima, implementirani su modeli za generisanje velikih grafova.
+
+\subsection{Erd\H os-R\' enyi model}
+
+Model je implementiran na osnovu materijala sa predavanja dostupnih na Moodle kursu \cite{moodle}. Implementacija je ura\dj ena generisanjem niza grana izme\dj u svaka dva \v cvora u grafu $ G = (n, e) $ gde je $ n $ broj \v cvorova a $ e $ broj grana. Potom su filtrirane (uzete) grana koje povezuju dva razli\v cita \v cvora. Kori\v s\' cenjem standardne biblioteke za nasumi\v cne operacije u Juliji, niz grana je izme\v san i potom je u graf dodato prvi $ e $ grana.
+
+Na slici \ref{fig:erdos-renyi} je prikazan graf generisan Erd\H os-R\' enyi modelom sa 100 \v cvorova i 1650 grana.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{models/erdos_renyi.png}
+    \caption{Erd\H os-R\' enyi graf}
+    \label{fig:erdos-renyi}
+\end{figure}
+
+\subsection{Barab\' asi-Albert model}
+
+Za ovaj model grafa je potrebno generisati nasumi\v cni graf na koji \' ce preferencijalnim vezivanjem biti dodati \v cvorovi i uvezani za ostatak mre\v ze. Zbog toga je pored ovog modela implementiran i Gilberov model za nasumi\v cni graf koji se koristi generi\v se po\v cetni graf.
+
+Kao i kod Erd\H os-R\' enyi modela, model je implementiran na osnovu materijala dostupnih na Moodle kursu \cite{moodle}.
+
+Na slici \ref{fig:barabasi-albert} je prikazan graf generisan Barab\' asi-Albert modelom sa 100 \v cvorova, 10\% verovatno\' com da su dva \v cvora povezana prilikom nasumi\v cnog generisanja (parametar Gilbertovog modela), 200 dodatnih \v cvorova koji se vezuju preferencijalnim vezivanjem za ve\' c postoje\' ce \v cvorove i 5 grana sa kojima \' ce novi \v cvorovi biti povezani u grafu.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=\textwidth]{models/barabasi_albert.png}
+    \caption{Barab\' asi-Albert graf}
+    \label{fig:barabasi-albert}
+\end{figure}
+
+\subsection{Nasumi\v cni model za mre\v zu strukture jezgro-periferija}
+
+Graf strukture jezgro-periferija koja je opisana u radu Borgattija i Everetta \cite{borgattieverett2000} se mo\v ze implementirati generisanjem nasumi\v cnog grafa Gilbertovim modelom i zatim preferencijalnim vezivanjem vezati \v cvorove iz periferije za \v cvorove iz jezgra. Ovaj model je je opisan u radu Airoldija i Carleyja \cite{airoldicarely2005}, inspirisan modelom Borgattija i Everetta \cite{borgattieverett2000}. Graf generisan ovim metodom je prikazan na slici \ref{fig:pref-core-periph}. Parametri za generisanje su...
+
+Drugi na\v cin je upravo onaj koji su definisali Borgatti i Everett. Graf umesto preferencijalnim vezivanjem se generi\v se nasumi\v cnim vezivanjem \v cvorova. Graf generisan ovim metodom je prikazan na slici \ref{fig:rand-core-periph}. Parametri za generisanje su...
+
+Tre\' ci na\v cin bi bio taj da se odmah pri generisanju inicijalnog grafa od kog se po\v cinje preferencijalno vezivanje, generisati sve \v cvorove grafa i vezati ih nasumi\v cno. Tada se mogu samo \v cvorovi iz jezgra grafa dodatno vezati \v cime se dovodi do ve\' ce me\dj usobne povezanosti periferije grafa ali tako\dj e jake povezanosti jezgra. Ovaj model bi bio neka vrsta modifikacije modifikacije Gilbertovog modela po\v sto se generisanje grafa u potpunosti zasniva na nasumi\v cnom vezivanju. Graf generisan ovim metodom je prikazan na slici \ref{fig:modif-gilbert-core-periph}. Parametri za generisanje su...
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{models/pref_core_periphery.png}
+        \caption{Preferencijalnim vezivanjem}
+        \label{fig:pref-core-periph}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{models/rand_core_periphery.png}
+        \caption{Nasumi\v cnim vezivanjem}
+        \label{fig:rand-core-periph}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{.3\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{models/modified_gilbert_core_periphery.png}
+        \caption{Modifikovani Gilbertov model}
+        \label{fig:modif-gilbert-core-periph}
+    \end{subfigure}
+    \caption{Graf strukture jezgro-periferija}
+    \label{fig:core-periph}
+\end{figure}
+
+\section{Analize realnih grafova}
+
+Za analizu realnih mre\v za je ra\dj eno goreliranje \v sel indeksa sa metrikama stepena \v cvorova, betweenness i closeness centralnosti. Prvo je ra\dj en Pirsonov koeficijent korelacije koji je prikazan na heat mapi, potom Spermanov koeficijent korelacije koji je isto prikazan na heat mapi i na samom kraju su metrike prikazane na tri grafikona.
+
+\v Sel indeks mre\v ze je prikazan na $ y $ osi dok su metrike centralnosti prikazane na $ x $ osi.
+
+Pored toga \' cemo analizirati kako se menjaju makroskopske strukturne karakteristike k-core-ova sa pove\' canjem k. Ovo je ra\dj eno iterativnim inkrementovanjem $ k $ i generisanjem $ k $-core-a grafa ``straight-forward'' principom (uklanjanjem \v cvorova sa \v sel indeksom manjim od $ k $). Za ``small-world'' indeks je potrebno imati najkra\' ce distance izme\dj u svaka dva \v cvora u grafu, stoga je za to kori\v s\' cen Floyd–Warshall algoritam. Razlog za to je to \v sto u Graphs paketu koji je kori\v s\' cen, on je implementiran tako da vra\' ca odmah matricu distanci izme\dj u svaka dva grafa i \v sto ima imeplemntaciju koja koristi paralelno izvr\v savanje.
+
+\subsection{Facebook ego mre\v za}
+
+\subsubsection{Koreliranje \v sel indeksa sa metrikama centralnosti}
+
+Sa Pirsonovim koeficijentom korelacije \ref{fig:facebook-prison} se mo\v ze videti da postoji vrlo visok stepen korelacije izme\dj u stepena \v cvorova i njihovog \v sel indeksa (83.63\%) dok taj stepen nije toliko visok izme\dj u betweenness i closeness centralnosti u paru sa \v sel indeksom (3.72\% i 22.08\% respektivno).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{facebook_plots/pearson_correlation.png}
+    \caption{Pirsonov koeficijent korelacije}
+    \label{fig:facebook-prison}
+\end{figure}
+
+Sa Spermanovim koeficijentom korelacije \ref{fig:facebook-sperman} se mo\v ze videti da je korelacija izme\dj u \v sel indeksa \v cvora i njegovog stepena mnogo ve\' ca (96.88\%) ali je i korelacija izme\dj u betweenness centralnosti i \v sel indeksa porasla (70.15\%). Korelacija izme\dj u closeness centralnosti i \v sel indeksa sa ovim koeficijentom jeste ve\' ca ali nije dovoljno zna\v cajna idalje (44.55\%)
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{facebook_plots/spearman_correlation.png}
+    \caption{Spermanov koeficijent korelacije}
+    \label{fig:facebook-sperman}
+\end{figure}
+
+Kada iscrtamo ta\v cke na scatter grafikonu \v cije su koordinate definisane \v sel indeksom i metrikama centralnosti \ref{fig:facebook-korelacije}, mo\v zemo jasno videti da je korelacija izme\dj u \v sel indeksa i stepena \v cvora izuzetno velika izmedju \v sel indeksa i betweenness centralnosti nije previ\v se zna\v cajna ali odre\dj eni \v cvorovi je ``vuku'' ka gore.
+
+Kod slu\v caja closeness centralnosti se jasno mo\v ze videti da ona gotovo ne postoji.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{facebook_plots/shell_plot.png}
+    \caption{Grafikon korelacija}
+    \label{fig:facebook-korelacije}
+\end{figure}
+
+\subsubsection{Makroskopske strukturne karakteristike}
+
+Kod promena makroskoprskih strukturnih karakteristika mo\v zemo da uvidimo tri bitne stvari \ref{fig:facebook-karakteristike}. Po broju \v cvorova se jasno mo\v ze videti da ova mre\v za ima osobinu malog sveta. Oduzimanjem \v cvorova koji imaju manje od k grana dok se k uve\' cava mo\v zemo primetiti drugu bitnu stvar a to je javljanje dodatne dve komponente u grafu.
+
+Sa $ k = 6 $ i $ k = 8 $ se pojavi i izgubi jedna povezana komponenta u grafu, kao i sa $ k = 18 $ i $ k = 22 $ respektivno. Ovo mo\v ze da zna\v ci da pored jednog velikog jezgra koje postoji u grafu, tako\dj e postoje dva mala ali dovoljno zna\v cajna jezgra koja su sama za sebe tesno povezana i u jednom momentu sa brisanjem artikulacionih \v cvorova bila odvojena od ostatka mre\v ze.
+
+Tre\' ca zna\v cajana stavka jeste nagli pad \v cvorova u grafu sa generisanjem 71-core-a. Tu se mo\v ze videti da je gustina grafa naglo sko\v cila kao i koeficijent klasterisanja dok su koeficijent malog sveta, diametar i broj grana nalgo pali. To mo\v ze da zna\v ci da sa 71-core-om grafa se dolazi do samog jezgra grafa zbog kog otpada i poslednji deo periferije.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{facebook_plots/characteristics.png}
+    \caption{Makroskopske strukturne karakteristike}
+    \label{fig:facebook-karakteristike}
+\end{figure}
+
+\newpage
+
+\subsection{Deezer mre\v za}
+
+\subsubsection{Koreliranje \v sel indeksa sa metrikama centralnosti}
+
+Kod Pirsonovog koeficijenta korelacije \ref{fig:deezer-prison} se vidi da postoji ne velika ali primetna korelacija \v sel indeksa sa stepenom \v cvora i clonseness centralno\v s\' cu (77,99\% i 68,08\% respektivno). Sa druge strane korelacija izme\dj u \v sel indeksa i betweenness centralnosti je znatno manja (21,95\%).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{deezer_plots/pearson_correlation.png}
+    \caption{Pirsonov koeficijent korelacije}
+    \label{fig:deezer-prison}
+\end{figure}
+
+Sa druge strane kod Spermanovog koeficijenta korelacije \ref{fig:deezer-sperman}, vidi se da ponovo postoji izuzetno visok stepen korelacije izme\dj u \v sel indeksa i stepena \v cvora (95,18\%) dok je korelacija \v sel indeksa sa betweenness i clonseness metrikama centralnosti vidno manja (75,21\% i 73,74\% respektivno).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{deezer_plots/spearman_correlation.png}
+    \caption{Spermanov koeficijent korelacije}
+    \label{fig:deezer-sperman}
+\end{figure}
+
+Na scatter grafikonima \ref{fig:deezer-korelacije} se mo\v ze jasno videti da kao \v sto je i po Pirsonovom i Spermanovom koeficijentu nazna\v ceno, postoji velika korelacija izme\dj u \v sel indeksa i stepena \v cvora. Iako ta\v cke izgledaju kao da su razu\dj ene, mo\v zemo videti da sa rastom \v sel indeksa, raste minimalni stepen \v cvora. Kod grafikona \v sel indeksa i betweenness centralnosti jasno je da gotovo ne postoji korelacija izme\dj u dve vrednosti a kod closeness centralnosti ona postoji mada nije tolika kao kod stepena \v cvora.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{deezer_plots/shell_plot.png}
+    \caption{Grafikon korelacija}
+    \label{fig:deezer-korelacije}
+\end{figure}
+
+\subsubsection{Makroskopske strukturne karakteristike}
+
+Analizom razli\v citih $ k $-core-ova mre\v ze \ref{fig:deezer-karakteristike}, mo\v zemo primetiti jednu klju\v cnu ta\v cku a to je $ k = 3 $. Tada broj komponenti grafa ska\v ce sa jedne na 10. To nam na\v zna\v cava da zapravo postoji 10 malih zajednica koje su jako povezane i one su se ispoljile kada su artikulacioni \v cvorovi izme\dj u njih bili obrisani. Tako\dj e se mo\v ze primetiti da je gustina grafa i koeficijent klasterisanja naglo ko\v cio dok su dimaetar, ``small-world'' indeks i procenat \v cvorova i grana unutar globalne povezane komponente naglo opali sa $ k = 9 $. To bi nam zna\v cilo da je sa tim core-om grafa po\v celo uklanjanje \v cvorova koji su pripadali jezgru grafa.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{deezer_plots/characteristics.png}
+    \caption{Makroskopske strukturne karakteristike}
+    \label{fig:deezer-karakteristike}
+\end{figure}
+
+\subsection{Twitch mre\v za}
+
+\subsubsection{Koreliranje \v sel indeksa sa metrikama centralnosti}
+
+Kod Pirsonovog koeficijenta korelacije \ref{fig:twitch-prison} na ovom grafu vidimo da closeness centralnost ima ne\v sto ve\' cu korelaciju sa \v sel indeksom nego stepen \v cvora \v sto je bila pojava kod prethodna dva grafa (75,62\% i 54,57\% respektivno). Korelacija betweenness centralnosti sa \v sel indeksom je kao i do sada gotovo najmanja (23,8\%).
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=.8\textwidth]{twitch_plots/pearson_correlation.png}
+    \caption{Pirsonov koeficijent korelacije}
+    \label{fig:twitch-prison}
+\end{figure}
+
+Sa Spermanovim koeficijentom \ref{fig:twitch-sperman} opet vidimo da je stepen \v cvora u najja\v coj korelaciji sa \v sel indeksom (98,34\%) dok su betweenness i closeness centralnosti ni\v ze (83,77\% i 77,38\% respektivno).
+
+\begin{figure}
+    \centering
+    \includegraphics[width=.8\textwidth]{twitch_plots/spearman_correlation.png}
+    \caption{Spermanov koeficijent korelacije}
+    \label{fig:twitch-sperman}
+\end{figure}
+
+Na scatter plot-u \ref{fig:twitch-korelacije} se mogu videti ve\' c doneseni zaklju\v cci.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{twitch_plots/shell_plot.png}
+    \caption{Grafikon korelacija}
+    \label{fig:twitch-korelacije}
+\end{figure}
+
+\subsubsection{Makroskopske strukturne karakteristike}
+
+Kod makroskopskih strukturnih karakteristika \ref{fig:twitch-karakteristike} ne vidimo ne\v sto \v sto previ\v se odudara od dosada\v snjih uvi\dj anja. Graf demonstrira kla\v si\v can slu\v caj malog sveta, bez nekih dramati\v cnih promena kao u prethodna dva grafa.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{twitch_plots/characteristics.png}
+    \caption{Makroskopske strukturne karakteristike}
+    \label{fig:twitch-karakteristike}
+\end{figure}
+
+\newpage
+
+\section{Zaklju\v cak}
+
+Ovim prakti\v cnim projektom sam imao priliku da imam uvid u proces analize mre\v za i razne prepreke koje se javljaju na tom putu. Pored toga sam imao i priliku da pravim sopstvenu implementaciju algoritama za analizu mre\v za \v cime sam mogao da imam jasniju sliku kako radi sam ekosistem programskog jezika u kom je ra\dj ena analiza.
+
+Ono \v sto sam mogao da primetim u vezi sa jezikom jeste da pored toga \v sto je programski jezik mlad i ima razne moredene funkcionalnosti koje olak\v savaju rad u njemu, kako sa in\v zinjerske strane tako i sa strane primene gotovih funkcija, sam ekosistem idalje nije u potpunosti sazreo i ima dosta prostora za napredovanje.
+
+Dokumentacija oko nekih funkcija nije uvek najjasnija i mogla bi da bude unapre\dj ena i razne funkcije bi mogle vi\v se da se oslanjaju na paralelizaciju ra\v cuna. Iako je Julia sama po sebi brza, mogla bi da se dodatno ubrza ako bi modul za paralelno izra\v cunavanje odre\dj enih metrika i vrednosti jo\v s agresivnije paralelizovao procese.
+
+\newpage
+
+\begin{thebibliography}{9}
+
+\bibitem{facebookgraph}
+J. McAuley and J. Leskovec. Learning to Discover Social Circles in Ego Networks. NIPS, 2012. (\href{https://snap.stanford.edu/data/ego-Facebook.html}{link})
+
+\bibitem{deezergraph}
+B. Rozemberczki and R. Sarkar. Characteristic Functions on Graphs: Birds of a Feather, from Statistical Descriptors to Parametric Models. 2020. (\href{https://snap.stanford.edu/data/feather-deezer-social.html}{link})
+
+\bibitem{twitchgraph}
+Benedek Rozemberczki and Carl Allen and Rik Sarkar. Multi-scale Attributed Node Embedding. 2019. (\href{https://snap.stanford.edu/data/twitch-social-networks.html}{link})
+
+\bibitem{batageljzaversnik2003}
+Batagelj, V. and Zaversnik, M. An o (m) algorithm for cores decomposition of networks. arXiv preprint cs/0310049, 2003.
+
+\bibitem{moodle}
+Moodle stranica kursa Socijalne Mre\v ze, 2023. (\href{https://moodle.pmf.uns.ac.rs/course/view.php?id=591}{link})
+
+\bibitem{borgattieverett2000}
+Borgatti, S.P. and Everett, M.G. Models of core/periphery structures. Social networks, 21(4), pp.375-395, 2000.
+
+\bibitem{airoldicarely2005}
+Airoldi, E.M. and Carley, K.M. Sampling algorithms for pure network topologies: a study on the stability and the separability of metric embeddings. ACM SIGKDD Explorations Newsletter, 7(2), pp.13-22, 2005.
+
+\end{thebibliography}
+
+\end{document}
